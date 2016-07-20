@@ -20,19 +20,19 @@ Creates a node installs the Sensu-server.
 
 Versions
 ---------
-Sensu-server -> 0.25
-Redis -> >= 1.3.14
-RabbitMq -> 3.6.0-1
-Erlang -> 1:18.2
+* Sensu-server -> 0.25
+* Redis -> >= 1.3.14
+* RabbitMq -> 3.6.0-1
+* Erlang -> 1:18.2
 
 Ports to be open
 -----------------
-80 -> HTTP
-22 -> SSH
-3000 -> Uchiwa
-5671 -> RabbitMQ
-15671 -> RabbitMQ Web Console
-6379 -> Redis
+* 80 -> HTTP
+* 22 -> SSH
+* 3000 -> Uchiwa
+* 5671 -> RabbitMQ
+* 15671 -> RabbitMQ Web Console
+* 6379 -> Redis
 	
 Usage
 -----

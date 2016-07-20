@@ -22,14 +22,14 @@ Creates a node installs the Solr.
 
 Versions
 ---------
-Solr -> 6.1.0
-Java -> Oracle 8
+* Solr -> 6.1.0
+* Java -> Oracle 8
 
 Ports to be open
 -----------------
-80 -> HTTP
-22 -> SSH
-8983 -> Solr
+* 80 -> HTTP
+* 22 -> SSH
+* 8983 -> Solr
 
 	
 Usage
