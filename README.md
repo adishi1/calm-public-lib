@@ -20,7 +20,6 @@ Description of content:
 * **Calm-Support-Scripts**: These are specific scripts provided to Calm users on request. e.g. Creating bulk users into Calm.
 
 Here are some resources to help you out during your journey with Calm:
-* [Gitter.im community chat channel](https://gitter.im/calm-io/Calm-Community-Channel): Uses Github/Twitter account to login
 * [Calm Documentation](http://docs.calm.io)
 * [Support Site](http://support.calm.io) 
 * [The Calm.io Blog](https://calm.io/blog)
