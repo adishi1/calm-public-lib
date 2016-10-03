@@ -12,8 +12,8 @@ Requirements
 
 Version
 --------
--- Mongo DB version 3.2.3
--- Ubuntu 14.04 Server Edition.
+- Mongo DB version 3.2.3
+- Ubuntu 14.04 Server Edition.
 
 Global Variables
 ----------
