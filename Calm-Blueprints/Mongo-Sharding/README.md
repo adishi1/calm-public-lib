@@ -10,6 +10,11 @@ Requirements
 - Azure
 - Openstack
 
+Version
+--------
+-- Mongo DB version 3.2.3
+-- Ubuntu 14.04 Server Edition.
+
 Global Variables
 ----------
 - `NO_OF_REPLICASETS` - Number of replicaset required. Ex 3 (It creates 3 node Configset & NO_OF_SHARDS * 3 dataset nodes)
