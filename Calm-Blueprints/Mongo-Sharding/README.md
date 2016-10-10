@@ -1,6 +1,9 @@
 MongoSharding Blueprint
 =======================
 
+Mongo Sharding is a method for distributing data across multiple machines.
+MongoDB uses sharding to support deployments with very large data sets and high throughput operations.
+This is an example of Distributed Database systems where applications require large data sets or high throughput applications.
 Blueprint creates a basic mongo shard. By default this blueprint creates 9 (3 Config + 6 Data) nodes.
 
 Requirements
