@@ -13,8 +13,8 @@
 
 $vmmServerName = "localhost"
 $vmName = "@@{VM_NAME}@@"
-$HostName ="svrdell1.mtc.com"
-$VMPath = "C:\ProgramData\Microsoft\Windows\Hyper-V"
+$HostName ="Demo02-$(Get-Random -Minimum 1 -Maximum 4).hyperv-systest.com"
+$VMPath = "\\Unnamed\default-container-17627336789508"
 $ScsiAdapterCount="1"
 $cpuCount="@@{CPU}@@"
 $reqRamSize="@@{MEMORY}@@"
@@ -22,29 +22,19 @@ $DVDDriveCount="1"
 $networkAdapterCount = "1"
 $Description = "This is $($vmName) Profile"
 $vm_image="@@{VM_IMAGE}@@"
+$VirtualNetwork="ExternalSwitch"
+$VirtualNetworkId="d261cc95-fa89-45a0-8b5d-7c49363a0e1e"
 
 Import-Module "C:\Program Files\Microsoft System Center 2012 R2\Virtual Machine Manager\bin\psModules\virtualmachinemanager\virtualmachinemanager.psd1"
 
 $JobGroup = [System.Guid]::NewGuid()
 $ProfileName = "Temp_$vmName"
 
-if($vm_image -eq "centos"){
-  $ImageName="centos"
-  $ImageId="9d6bfe61-581a-425a-b859-423e2135ae10"
-  $VirtualNetworkAdapter = Get-SCVirtualNetworkAdapter -VMMServer localhost -Name "centos" -ID "f47856cf-4f6e-4feb-9b56-9d3d35bc9ddd"
+if($vm_image -eq "windows2012r2"){
+  $ImageName="WindowsServer2012R2"
+  $ImageId="ae7fc6c9-4b5e-43a4-a9f6-8bd5a7ca11e2"
+  $OperatingSystemType="Windows Server 2012 R2 Standard"
 }
-elseif($vm_image -eq "windows"){
-  $ImageName="Test"
-  $ImageId="fb049a5a-34d2-4c49-9675-a245916cd873"
-  $VirtualNetworkAdapter = Get-SCVirtualNetworkAdapter -VMMServer localhost -Name "Test" -ID "be1b548d-017b-454c-8410-d43f5bda43ab"
-}
-elseif($vm_image -eq "ubuntu"){
-  $ImageName="ubuntu-image"
-  $ImageId="769b445f-ec2f-400f-8d94-cd2bc88d5c78"
-  $VirtualNetworkAdapter = Get-SCVirtualNetworkAdapter -VMMServer localhost -Name "ubuntu-image" -ID "3fb23c8c-60ff-4441-bd8e-e0f71a753f74"
-}
-
-
 
 if (Get-SCVirtualMachine -VMMServer $vmmServerName -VMHost $HostName -Name $vmName)
 {
@@ -79,25 +69,49 @@ else
    Write-Output "HardwareProfile $ProfileName exists and proceeding to remove it"
    Get-SCHardwareProfile -VMMServer $vmmServerName | where { $_.Name -eq $ProfileName } | Remove-SCHardwareProfile | out-null
   }
-  $VMNetwork = Get-SCVMNetwork -VMMServer $vmmServerName -Name "MTC" -ID "05c30e42-f108-49c8-b2ac-b4d7b4b4713c"
+  $VMNetwork = Get-SCVMNetwork -VMMServer $vmmServerName -Name "$VirtualNetwork" -ID $VirtualNetworkId
   if (!$VMNetwork){
   Write-Output "Vm Network not found"
   exit
   }
 
+  New-SCVirtualNetworkAdapter -VMMServer $vmmServerName -JobGroup $JobGroup -MACAddressType Dynamic -VirtualNetwork $VirtualNetwork -VLanEnabled $false -Synthetic -EnableVMNetworkOptimization $false -EnableMACAddressSpoofing $false -EnableGuestIPNetworkVirtualizationUpdates $false -IPv4AddressType Dynamic -IPv6AddressType Dynamic -VMNetwork $VMNetwork
+  $CPUType = Get-SCCPUType -VMMServer $vmmServerName | where {$_.Name -eq "3.60 GHz Xeon (2 MB L2 cache)"}
+
   Write-Output "Creating HardwareProfile Template creating for Static RAM"
-  $HardwareProfile = New-SCHardwareProfile -VMMServer $vmmServerName -Name $ProfileName -Description $Description -CPUCount $cpuCount -MemoryMB $reqRamSize -DynamicMemoryEnabled $false -MemoryWeight 5000 -VirtualVideoAdapterEnabled $false -CPUExpectedUtilizationPercent 20 -DiskIops 0 -CPUMaximumPercent 100 -CPUReserve 0 -NumaIsolationRequired $false -NetworkUtilizationMbps 0 -CPURelativeWeight 100 -HighlyAvailable $false -DRProtectionRequired $false -NumLock $true -BootOrder "CD", "IdeHardDrive", "PxeBoot", "Floppy" -CPULimitFunctionality $false -CPULimitForMigration $false -JobGroup $JobGroup
-  Set-SCVirtualNetworkAdapter -VirtualNetworkAdapter $VirtualNetworkAdapter -NoLogicalNetwork -VLanEnabled $false -VirtualNetwork "External" -NoPortClassification -JobGroup $JobGroup
-  $VM = Get-SCVirtualMachine -VMMServer localhost -Name $ImageName -ID $ImageId | where {$_.VMHost.Name -eq $VMHost}
-  if (!$VM){
-  Write-Output "Vm image not available"
+  New-SCHardwareProfile -VMMServer $vmmServerName -CPUType $CPUType -Name $ProfileName -Description $Description -CPUCount $cpuCount -MemoryMB $reqRamSize -DynamicMemoryEnabled $false -MemoryWeight 5000 -VirtualVideoAdapterEnabled $false -CPUExpectedUtilizationPercent 20 -DiskIops 0 -CPUMaximumPercent 100 -CPUReserve 0 -NumaIsolationRequired $false -NetworkUtilizationMbps 0 -CPURelativeWeight 100 -HighlyAvailable $false -DRProtectionRequired $false -NumLock $false -BootOrder "CD", "IdeHardDrive", "PxeBoot", "Floppy" -CPULimitFunctionality $false -CPULimitForMigration $false -Generation 1 -JobGroup $JobGroup
+
+  if("@@{NO_OF_DISKS}@@" -gt "1"){
+    $count = 0
+    ForEach ($HardDisk in (1..@@{NO_OF_DISKS}@@)){
+      New-SCVirtualDiskDrive -VMMServer $vmmServerName -SCSI -Bus 0 -LUN $count -JobGroup $JobGroup -VirtualHardDiskSizeMB @@{DISK_SIZE}@@ -CreateDiffDisk $false -Dynamic -Filename "$vmName-disk-$count" -VolumeType None
+      $count++
+    }
   }
+  $Template = Get-SCVMTemplate -VMMServer $vmmServerName -ID $ImageId | where {$_.Name -eq $ImageName}
+  if (!$Template){
+  Write-Output "Vm Template not available"
+  }
+  $HardwareProfile = Get-SCHardwareProfile -VMMServer $vmmServerName | where {$_.Name -eq $ProfileName}
+  $OperatingSystem = Get-SCOperatingSystem -VMMServer $vmmServerName -ID "50b66974-c64a-4a06-b05a-7e6610c579a2" | where {$_.Name -eq $OperatingSystemType}
+  New-SCVMTemplate -Name "Temporary $JobGroup" -Template $Template -HardwareProfile $HardwareProfile -JobGroup $JobGroup -ComputerName "*" -TimeZone 4  -FullName "" -OrganizationName "" -Workgroup "WORKGROUP" -AnswerFile $null -OperatingSystem $OperatingSystem
+
+  $template = Get-SCVMTemplate -All | where { $_.Name -eq "Temporary $JobGroup" }
+  $virtualMachineConfiguration = New-SCVMConfiguration -VMTemplate $template -Name $vmName
+  Write-Output $virtualMachineConfiguration
+  Set-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration -VMHost $vmHost
+  Update-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration
+
+  $AllNICConfigurations = Get-SCVirtualNetworkAdapterConfiguration -VMConfiguration $virtualMachineConfiguration
+  Update-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration
+
   while(Get-SCJob | where { $_.Status -eq "Running" }){
-    Write-Output "waiting for other process to complete"
-    sleep $(Get-Random -Minimum 1 -Maximum 10)
+   Write-Output "waiting for other process to complete"
+   sleep $(Get-Random -Minimum 1 -Maximum 10)
   }
   Write-Output "Creating New VM $vmName on $VMHost"
-  $NewVM = New-SCVirtualMachine -VM $VM -Name $vmName -Description "" -JobGroup $JobGroup -UseDiffDiskOptimization -RunAsynchronously  -VMHost $VMHost -Path $VMPath -HardwareProfile $HardwareProfile -StartAction AlwaysAutoTurnOnVM -DelayStartSeconds 0 -StopAction SaveVM -StartVM
+  $NewVM = New-SCVirtualMachine -Name $vmName -VMConfiguration $virtualMachineConfiguration -Description "" -BlockDynamicOptimization $false -JobGroup $JobGroup -ReturnImmediately -StartAction AlwaysAutoTurnOnVM -StopAction "SaveVM" -StartVM
+
 }
 }
 while($true){
@@ -110,6 +124,7 @@ while($true){
     }
 }
 
+Get-SCVMTemplate -All | where { $_.Name -eq "Temporary $JobGroup" } | Remove-SCVMTemplate -Force
 
 Write-Output "Vm $($VmName) Running"
 
