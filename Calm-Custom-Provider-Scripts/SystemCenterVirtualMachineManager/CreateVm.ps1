@@ -24,6 +24,8 @@ $Description = "This is $($vmName) Profile"
 $vm_image="@@{VM_IMAGE}@@"
 $VirtualNetwork="ExternalSwitch"
 $VirtualNetworkId="d261cc95-fa89-45a0-8b5d-7c49363a0e1e"
+$NoOfDisks = @@{NO_OF_DISKS}@@
+$DiskSize = @@{DISK_SIZE}@@
 
 Import-Module "C:\Program Files\Microsoft System Center 2012 R2\Virtual Machine Manager\bin\psModules\virtualmachinemanager\virtualmachinemanager.psd1"
 
@@ -31,8 +33,8 @@ $JobGroup = [System.Guid]::NewGuid()
 $ProfileName = "Temp_$vmName"
 
 if($vm_image -eq "windows2012r2"){
-  $ImageName="WindowsServer2012R2"
-  $ImageId="ae7fc6c9-4b5e-43a4-a9f6-8bd5a7ca11e2"
+  $ImageName="WindowsServer2012R2-Base"
+  $ImageId="2076f8c1-df03-499e-9d60-abd1770f25a2"
   $OperatingSystemType="Windows Server 2012 R2 Standard"
 }
 
@@ -40,6 +42,7 @@ if (Get-SCVirtualMachine -VMMServer $vmmServerName -VMHost $HostName -Name $vmNa
 {
  Write-Output "VM with name $vmName already exists on the Host $HostName.."
  Write-Output "Kindly provide different VM Name to proceed further.."
+ exit
 }
 else
 {
@@ -48,6 +51,7 @@ else
    if (!$VMHost )
    {
     Write-Output "HostName $HostName not found in VMM Server..Provide correct Host Name"
+    exit
    }
  else
    {
@@ -81,16 +85,17 @@ else
   Write-Output "Creating HardwareProfile Template creating for Static RAM"
   New-SCHardwareProfile -VMMServer $vmmServerName -CPUType $CPUType -Name $ProfileName -Description $Description -CPUCount $cpuCount -MemoryMB $reqRamSize -DynamicMemoryEnabled $false -MemoryWeight 5000 -VirtualVideoAdapterEnabled $false -CPUExpectedUtilizationPercent 20 -DiskIops 0 -CPUMaximumPercent 100 -CPUReserve 0 -NumaIsolationRequired $false -NetworkUtilizationMbps 0 -CPURelativeWeight 100 -HighlyAvailable $false -DRProtectionRequired $false -NumLock $false -BootOrder "CD", "IdeHardDrive", "PxeBoot", "Floppy" -CPULimitFunctionality $false -CPULimitForMigration $false -Generation 1 -JobGroup $JobGroup
 
-  if("@@{NO_OF_DISKS}@@" -gt "1"){
+  if("$NoOfDisks" -ge "1"){
     $count = 0
-    ForEach ($HardDisk in (1..@@{NO_OF_DISKS}@@)){
-      New-SCVirtualDiskDrive -VMMServer $vmmServerName -SCSI -Bus 0 -LUN $count -JobGroup $JobGroup -VirtualHardDiskSizeMB @@{DISK_SIZE}@@ -CreateDiffDisk $false -Dynamic -Filename "$vmName-disk-$count" -VolumeType None
+    ForEach ($HardDisk in (1..$NoOfDisks)){
+      New-SCVirtualDiskDrive -VMMServer $vmmServerName -SCSI -Bus 0 -LUN $count -JobGroup $JobGroup -VirtualHardDiskSizeMB $DiskSize -CreateDiffDisk $false -Dynamic -Filename "$vmName-disk-$count" -VolumeType None
       $count++
     }
   }
   $Template = Get-SCVMTemplate -VMMServer $vmmServerName -ID $ImageId | where {$_.Name -eq $ImageName}
   if (!$Template){
   Write-Output "Vm Template not available"
+  exit
   }
   $HardwareProfile = Get-SCHardwareProfile -VMMServer $vmmServerName | where {$_.Name -eq $ProfileName}
   $OperatingSystem = Get-SCOperatingSystem -VMMServer $vmmServerName -ID "50b66974-c64a-4a06-b05a-7e6610c579a2" | where {$_.Name -eq $OperatingSystemType}
@@ -105,10 +110,10 @@ else
   $AllNICConfigurations = Get-SCVirtualNetworkAdapterConfiguration -VMConfiguration $virtualMachineConfiguration
   Update-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration
 
-  while(Get-SCJob | where { $_.Status -eq "Running" }){
-   Write-Output "waiting for other process to complete"
-   sleep $(Get-Random -Minimum 1 -Maximum 10)
-  }
+  #while(Get-SCJob | where {$_.Status -eq "Running"} | where {$_.Name -ne "Refresh host cluster"}){
+  # Write-Output "waiting for other process to complete"
+  # sleep $(Get-Random -Minimum 1 -Maximum 10)
+  #}
   Write-Output "Creating New VM $vmName on $VMHost"
   $NewVM = New-SCVirtualMachine -Name $vmName -VMConfiguration $virtualMachineConfiguration -Description "" -BlockDynamicOptimization $false -JobGroup $JobGroup -ReturnImmediately -StartAction AlwaysAutoTurnOnVM -StopAction "SaveVM" -StartVM
 
@@ -130,6 +135,7 @@ Write-Output "Vm $($VmName) Running"
 
 while($true){
     if((get-SCVirtualNetworkAdapter -VM $VmName -ErrorAction SilentlyContinue | select IPv4Addresses -ExpandProperty "IPv4Addresses") -eq $Null){
+    Refresh-VM -VM $VmName
     sleep 3
     }
     else{
