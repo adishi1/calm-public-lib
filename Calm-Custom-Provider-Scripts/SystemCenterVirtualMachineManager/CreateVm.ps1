@@ -23,9 +23,10 @@ $networkAdapterCount = "1"
 $Description = "This is $($vmName) Profile"
 $vm_image="@@{VM_IMAGE}@@"
 $VirtualNetwork="ExternalSwitch"
-$VirtualNetworkId="d261cc95-fa89-45a0-8b5d-7c49363a0e1e"
+$VirtualNetworkId=(Get-SCVMNetwork -Name $VirtualNetwork).ID | Select-Object -ExpandProperty Guid
 $NoOfDisks = @@{NO_OF_DISKS}@@
 $DiskSize = @@{DISK_SIZE}@@
+$Nics = @@{EXTRANICS}@@
 
 Import-Module "C:\Program Files\Microsoft System Center 2012 R2\Virtual Machine Manager\bin\psModules\virtualmachinemanager\virtualmachinemanager.psd1"
 
@@ -34,9 +35,10 @@ $ProfileName = "Temp_$vmName"
 
 if($vm_image -eq "windows2012r2"){
   $ImageName="WindowsServer2012R2-Base"
-  $ImageId="2076f8c1-df03-499e-9d60-abd1770f25a2"
   $OperatingSystemType="Windows Server 2012 R2 Standard"
 }
+$ImageId=(Get-SCVMTemplate -Name $ImageName).ID | Select-Object -ExpandProperty Guid
+
 
 if (Get-SCVirtualMachine -VMMServer $vmmServerName -VMHost $HostName -Name $vmName)
 {
@@ -78,8 +80,12 @@ else
   Write-Output "Vm Network not found"
   exit
   }
-
+  if ($Nics -eq $Null){
+    $Nics = 0
+  }
+  foreach ($Nic in (0..$Nics)){
   New-SCVirtualNetworkAdapter -VMMServer $vmmServerName -JobGroup $JobGroup -MACAddressType Dynamic -VirtualNetwork $VirtualNetwork -VLanEnabled $false -Synthetic -EnableVMNetworkOptimization $false -EnableMACAddressSpoofing $false -EnableGuestIPNetworkVirtualizationUpdates $false -IPv4AddressType Dynamic -IPv6AddressType Dynamic -VMNetwork $VMNetwork
+  }
   $CPUType = Get-SCCPUType -VMMServer $vmmServerName | where {$_.Name -eq "3.60 GHz Xeon (2 MB L2 cache)"}
 
   Write-Output "Creating HardwareProfile Template creating for Static RAM"

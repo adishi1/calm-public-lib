@@ -24,7 +24,7 @@ $Description = "This is $($vmName) Profile"
 $vm_image="@@{VM_IMAGE}@@"
 $CPUType = Get-SCCPUType -VMMServer $vmmServerName | where {$_.Name -eq "3.60 GHz Xeon (2 MB L2 cache)"}
 $VirtualNetwork="ExternalSwitch"
-$VirtualNetworkId="d261cc95-fa89-45a0-8b5d-7c49363a0e1e"
+$VirtualNetworkId=(Get-SCVMNetwork -Name $VirtualNetwork).ID | Select-Object -ExpandProperty Guid
 $NoOfDisks = @@{NO_OF_DISKS}@@
 $DiskSize = @@{DISK_SIZE}@@
 
@@ -36,7 +36,6 @@ $ProfileName = "Temp_$vmName"
 
 if($vm_image -eq "centos7"){
   $ImageName="Centos7-Image"
-  $ImageId="c53a17a5-a97c-4451-bd05-0007e7c8d1a3"
   $VMImageHost = "Demo02-2.hyperv-systest.com"
   $VirtualNetworkAdapter = Get-SCVirtualNetworkAdapter -VMMServer localhost -Name $ImageName -ID "c9934895-b5e2-4de0-a53d-48b229e63d79"
   $OperatingSystem = Get-SCOperatingSystem -VMMServer $vmmServerName -ID "a095d4f1-0d8d-4c17-882e-59cfe01cf55b" | where {$_.Name -eq "CentOS Linux 6 (64 bit)"}
@@ -44,6 +43,8 @@ if($vm_image -eq "centos7"){
 else{
   Write-Output "Given Image Does not exists"
 }
+
+$ImageId=(Get-SCVirtualMachine -Name $ImageName -VMHost  $VMImageHost).ID | Select-Object -ExpandProperty Guid
 
 
 if (Get-SCVirtualMachine -VMMServer $vmmServerName -VMHost $HostName -Name $vmName)
