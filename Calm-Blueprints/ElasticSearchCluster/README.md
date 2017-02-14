@@ -23,9 +23,8 @@ Stops the services.
 Usage
 -----
 1. Upload the blueprint to calm.
-2. Create a Elastic search Cluster.
-3. Change Nutanix provider in overview tab, to your existing Nutanix settings.
-4. Run the deployment.
+2. Change Nutanix provider in overview tab, to your existing Nutanix settings.
+3. Run the deployment.
 
 Global Variables
 -----------------
