@@ -1,14 +1,14 @@
 Elastic Search Cluster Blueprint
 =======================
 
-Blueprint creates Elastic search Cluster with 3 node cluster.
+Blueprint creates a 3 node Elastic search Cluster.
 
 Requirements
 ------------
 ### Provider
-- Aws (Default)
+- Aws 
 - Azure
-- Openstack
+- Nutanix (Default)
 
 ### OS
 - Ubuntu 14.04
@@ -24,9 +24,12 @@ Usage
 -----
 1. Upload the blueprint to calm.
 2. Create a Elastic search Cluster.
-3. Change Aws provider in overview tab, to your existing Aws settings.
+3. Change Nutanix provider in overview tab, to your existing Nutanix settings.
 4. Run the deployment.
 
+Global Variables
+-----------------
+CLUSTER_NAME - Name of the elastic search cluster
 
 TODO
 -----

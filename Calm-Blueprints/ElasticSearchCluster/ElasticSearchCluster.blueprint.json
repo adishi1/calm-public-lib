@@ -1,53 +1,37 @@
 {
     "tasks":[
         {
-            "uid":"574bd2500807a3777797713c",
-            "classification":"provision_azure",
-            "creation_time":1464586832,
-            "user_data":null,
-            "credential_id":"574bd2500807a3777797713b",
-            "storage_type":"Standard_GRS",
-            "size":"Basic_A1",
-            "subnet":"Subnet-1",
-            "network":"calmnet",
-            "image_type":"os",
-            "version":21,
-            "location":"East US",
+            "vm_name":"elasticsearch@@{calm_array_index}@@",
+            "memory_mb":"4096",
+            "network_uuid":"2b8d8ff9-d9bd-444c-8ffe-889eaad30826",
+            "uid":"5860b7d04922933db03b46cb",
+            "classification":"provision_nutanix",
+            "num_cores_per_vcpu":"2",
+            "fixed_cost":0.0,
+            "vm_disk_uuid":"7445c082-41da-4cf3-93f7-5ba715732173",
+            "creation_time":1482733542,
+            "variable_cost":0.0,
+            "num_vcpus":"1",
+            "credential_id":"5860b7d04922933db03b46ca",
+            "modification_time":1487058394,
+            "vdisks":[
+
+            ],
+            "version":37,
+            "critical":true,
             "editables":[
 
             ],
-            "vm_name":"elasticsearch1@@{calm_array_index}@@11",
-            "data_disk_list":[
-                {
-                    "logical_disk_size_in_gb":"2",
-                    "uid":"574bd2500807a37777977147",
-                    "classification":null,
-                    "disk_label":"@@{vm_name}@@-Disk0",
-                    "host_caching":"ReadWrite",
-                    "lun":"0"
-                }
-            ],
-            "tags":{
-
-            },
-            "image_name":"b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-trusty-14_04_4-LTS-amd64-server-20160527-en-us-30GB",
-            "modification_time":1464602789,
-            "name":"Provision Azure",
-            "install_vm_agent":true,
-            "shutdown_behavior":"delete",
-            "credential_to_feed_vm":"574bd2500807a3777797713b",
-            "storage_name":"elasticsearch@@{calm_random}@@",
-            "critical":true,
-            "os_type":"Linux"
+            "name":"Provision Nutanix"
         },
         {
-            "uid":"574bd2740807a37170572ca9",
+            "uid":"5860b7d04922933db03b46cc",
             "classification":"runshell",
-            "script":"#!\/bin\/bash\nset -ex\neval $(python -c '\nips = \"@@{calm_array_private_ip_address}@@\".split(\",\")\nif len(ips) == 0:\n    print \"ES_NODES=\"\nelse:\n    print \"ES_NODES='\"'\"'\\\"%s\\\"'\"'\"'\" % '\"'\"'\", \"'\"'\"'.join(ips)\n')\n\nwget -qO - https:\/\/packages.elastic.co\/GPG-KEY-elasticsearch | sudo apt-key add -\necho \"deb http:\/\/packages.elastic.co\/elasticsearch\/2.x\/debian stable main\" | sudo tee -a \/etc\/apt\/sources.list.d\/elasticsearch-2.x.list\nsudo apt-get update && sudo apt-get -y install elasticsearch\necho \"network.host: localhost\" | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\necho \"discovery.zen.ping.multicast.enabled: false\" | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\nsudo cp \/etc\/elasticsearch\/elasticsearch.yml \/etc\/elasticsearch\/elasticsearch.yml.template\necho \"discovery.zen.ping.unicast.hosts: [${ES_NODES}]\" | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\nsudo service elasticsearch restart\nsudo update-rc.d elasticsearch defaults 95 10",
+            "script":"#!\/bin\/bash\nset -ex\neval $(python -c '\nips = \"@@{calm_array_vm_ip}@@\".split(\",\")\nif len(ips) == 0:\n    print \"ES_NODES=\"\nelse:\n    print \"ES_NODES='\"'\"'\\\"%s\\\"'\"'\"'\" % '\"'\"'\", \"'\"'\"'.join(ips)\n')\nqu=$(($(($(echo \"@@{calm_array_vm_ip}@@\" | tr \",\" \"\\n\" | wc -l)\/2))+1))\nwget -qO - https:\/\/packages.elastic.co\/GPG-KEY-elasticsearch | sudo apt-key add -\necho \"deb http:\/\/packages.elastic.co\/elasticsearch\/2.x\/debian stable main\" | sudo tee -a \/etc\/apt\/sources.list.d\/elasticsearch-2.x.list\nsudo apt-get update && sudo apt-get -y install elasticsearch\necho 'network.host: 0.0.0.0\ncluster.name: \"@@{CLUSTER_NAME}@@\"\nnode.name: elnode@@{calm_array_index}@@\ndiscovery.zen.ping.multicast.enabled: false' | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\necho \"discovery.zen.minimum_master_nodes: $qu\" | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\nsudo cp \/etc\/elasticsearch\/elasticsearch.yml \/etc\/elasticsearch\/elasticsearch.yml.template\necho \"discovery.zen.ping.unicast.hosts: [${ES_NODES}]\" | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\nsudo service elasticsearch restart\nsudo update-rc.d elasticsearch defaults 95 10",
             "creation_time":1464586868,
-            "credential_id":"574bd2500807a3777797713b",
-            "modification_time":1464602789,
-            "version":20,
+            "credential_id":"5860b7d04922933db03b46ca",
+            "modification_time":1487058490,
+            "version":46,
             "critical":false,
             "editables":[
 
@@ -55,13 +39,13 @@
             "name":"InstallElasticSearchCluster"
         },
         {
-            "uid":"574c04ac0807a3842010ab9d",
+            "uid":"5860b7d04922933db03b46cd",
             "classification":"runshell",
             "script":"#!\/bin\/bash\nset -ex\neval $(python -c '\nips = \"@@{calm_array_private_ip_address}@@\".split(\",\")\nif len(ips) == 0:\n    print \"ES_NODES=\"\nelse:\n    print \"ES_NODES='\"'\"'\\\"%s\\\"'\"'\"'\" % '\"'\"'\", \"'\"'\"'.join(ips)\n')\n\nsudo cp -f \/etc\/elasticsearch\/elasticsearch.yml.template \/etc\/elasticsearch\/elasticsearch.yml\necho \"discovery.zen.ping.unicast.hosts: [${ES_NODES}]\" | sudo tee -a \/etc\/elasticsearch\/elasticsearch.yml\nsudo service elasticsearch restart\nsudo update-rc.d elasticsearch defaults 95 10",
             "creation_time":1464599724,
-            "credential_id":"574bd2500807a3777797713b",
-            "modification_time":1464602782,
-            "version":4,
+            "credential_id":"5860b7d04922933db03b46ca",
+            "modification_time":1487058394,
+            "version":21,
             "critical":false,
             "editables":[
 
@@ -69,13 +53,13 @@
             "name":"Reconfigure"
         },
         {
-            "uid":"574c0a850807a3842010b997",
+            "uid":"5860b7d04922933db03b46ce",
             "classification":"runshell",
             "script":"#!\/bin\/bash\nset -ex\n\n# Install Oracle Java 8\nsudo apt-get update\nsudo apt-get install -y python-software-properties\nsudo add-apt-repository -y ppa:webupd8team\/java\nsudo apt-get update\necho \"debconf shared\/accepted-oracle-license-v1-1 select true\" | sudo debconf-set-selections\necho \"debconf shared\/accepted-oracle-license-v1-1 seen true\" | sudo debconf-set-selections\nsudo apt-get install -y oracle-java8-installer\n",
             "creation_time":1464601221,
-            "credential_id":"574bd2500807a3777797713b",
-            "modification_time":1464602789,
-            "version":5,
+            "credential_id":"5860b7d04922933db03b46ca",
+            "modification_time":1487058490,
+            "version":31,
             "critical":false,
             "editables":[
 
@@ -83,7 +67,7 @@
             "name":"InstallJava"
         }
     ],
-    "uid":"574bd2500807a37777977141",
+    "uid":"5860b7d04922933db03b46d2",
     "classification":"blueprint",
     "autoscale_config":{
         "post_flow":null,
@@ -98,10 +82,31 @@
         "scale_by":"1",
         "alert_window":"1800"
     },
-    "cost":0.0,
+    "profiles":[
+        {
+            "cost":0.0,
+            "uid":"5860b7d04922933db03b46d1",
+            "classification":"resource_profile",
+            "service_port":22,
+            "address":"@@{vm_ip}@@",
+            "creation_time":1482733520,
+            "modification_time":1487058394,
+            "version":17,
+            "provider":"5860b7d04922933db03b46cb",
+            "service_type":"ssh",
+            "automatic_cost":false,
+            "os_type":"Linux",
+            "properties":[
+
+            ],
+            "name":"Nutanix"
+        }
+    ],
     "strategy_enabled":false,
+    "replaced_tasks":{
+
+    },
     "environment":"default",
-    "provider":null,
     "config":{
         "setup":[
 
@@ -112,17 +117,19 @@
 
         ]
     },
-    "calm-version":"1.7.2",
+    "calm-version":"1.8.3",
     "description":"ElasticSearchCluster",
     "parent":null,
     "flows":[
         {
             "tasks":[
                 {
-                    "task_id":"574c04ac0807a3842010ab9d",
-                    "rc_id":"cid:00000001",
                     "uid":"574c04ac0807a3842010ab9e",
-                    "classification":null
+                    "classification":null,
+                    "work_type":"TASK",
+                    "target_id":"cid:00000001",
+                    "target_type":"RESOURCE",
+                    "work_id":"5860b7d04922933db03b46cd"
                 }
             ],
             "uid":"cid:00000002",
@@ -133,7 +140,7 @@
 
             ],
             "has_critical_tasks":false,
-            "modification_time":1464602789,
+            "modification_time":1487058394,
             "version":0,
             "flow_type":null,
             "critical":false,
@@ -146,23 +153,33 @@
     "credentials":[
         {
             "username":"ubuntu",
-            "public_key":"-----BEGIN CERTIFICATE-----\nMIID4zCCAsugAwIBAgIJAIToAW02xaWfMA0GCSqGSIb3DQEBCwUAMIGHMQswCQYD\nVQQGEwJJTjESMBAGA1UECAwJUmFqYXN0aGFuMRIwEAYDVQQHDAlCYW5nYWxvcmUx\nDzANBgNVBAoMBkNBTE1JTzEMMAoGA1UECwwDZGV2MQ8wDQYDVQQDDAZDQUxNSU8x\nIDAeBgkqhkiG9w0BCQEWEW1hZGh1bGlrYUBjYWxtLmlvMB4XDTE2MDMxNDExNDIw\nN1oXDTE3MDMxNDExNDIwN1owgYcxCzAJBgNVBAYTAklOMRIwEAYDVQQIDAlSYWph\nc3RoYW4xEjAQBgNVBAcMCUJhbmdhbG9yZTEPMA0GA1UECgwGQ0FMTUlPMQwwCgYD\nVQQLDANkZXYxDzANBgNVBAMMBkNBTE1JTzEgMB4GCSqGSIb3DQEJARYRbWFkaHVs\naWthQGNhbG0uaW8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCbxmb8\nrMW5da4lPX+V71loE2DJeCSfmUfYYNyWMmtPoTkxhOprgQ6xhJ3bQZrlSGmnlFIU\n6akfT0xxM1m1KkiR2ouzX0HLAgG9Z2EvM0BwoG5ow9BtB9Avvi9DYe0dSB\/rOe1L\n7ZlJ67z67GGgzzWZSjtzZNZa9BDzJe6x0s4X8CLqzqcGIGNHHxSD\/eZhyh16l2W5\ntEnXotfbscEibpaGtMnaovJBMMrqnQmio7hJX+RFWZrf9NbnOXs2t+vIxIn86LSi\nxbCuhw68YMWjkSHJ29eKVopssue2vA6456I1n7PqfKCy35kEBRdeabZHpH3mAZVc\n70sMHb4zuAvE4f8PAgMBAAGjUDBOMB0GA1UdDgQWBBQeFNLnU1TsTZhLgXR3CXH1\nDxk1tzAfBgNVHSMEGDAWgBQeFNLnU1TsTZhLgXR3CXH1Dxk1tzAMBgNVHRMEBTAD\nAQH\/MA0GCSqGSIb3DQEBCwUAA4IBAQBXWMxief6slwSPzHMSMGJ3lVeEgBsn5nDE\nx60q4KZ0cZIjSU0O9R6zGGII8u0+G8TnDTjq7J5xVNyj+Y99huoWe7L7rVwfz\/2W\noulrp9jhw9BdSDIGEDaJVIkCgQxYVwGGP9N2Yocm0PUGXd5xh2+zBVvpoLhvuKaO\n6dIOos0xW1M2P+K53v+3QVstWRPDxPO6Kj9On0vF1R9PdYxWb3Giat2rkdUNvgHM\n6cfKKoWicz1OB1bmz8VkCoq\/zPKq4Yz2lefQoeSKGZw8ekiIzVpJ87I5UHymlf6R\nJZbo65IiSnBrGXBLGOW1BBNLoMzVg6WFqIsJHpXnY2BRTfjxrlRz\n-----END CERTIFICATE-----\n",
-            "uid":"574bd2500807a3777797713b",
+            "public_key":null,
+            "uid":"5860b7d04922933db03b46ca",
             "classification":null,
-            "secret_type":"ssh_key",
+            "secret_type":"password",
             "creation_time":1464586832,
-            "modification_time":1464602782,
+            "modification_time":1487058394,
             "secret":null,
-            "version":13,
-            "name":"elasticsearchcluster"
+            "version":30,
+            "name":"ubuntu"
         }
     ],
     "bp_id":null,
     "properties":[
-
+        {
+            "uid":"58a2ab9d4922930d7a2d7955",
+            "classification":null,
+            "url":null,
+            "editable":true,
+            "value":"elcluster",
+            "key":"CLUSTER_NAME",
+            "property_description":null,
+            "property_type":"INTERNAL",
+            "setter":null
+        }
     ],
     "autoscale_enabled":false,
-    "name":"ElasticSearchCluster",
+    "name":"Nu_ElasticSearchCluster",
     "setup_ids":{
 
     },
@@ -177,6 +194,7 @@
         "listen_for":"internal",
         "uid":"574bd2500807a3777797715a"
     },
+    "current_profile":null,
     "resiliency_enabled":false,
     "architecture":[
         {
@@ -185,8 +203,6 @@
             ],
             "uid":"cid:00000001",
             "classification":"compute",
-            "address":"@@{public_ip_address}@@",
-            "credential_id":null,
             "autoscale_config":{
                 "post_flow":"ResiliencePostflow",
                 "cool_down_period":"1800",
@@ -200,10 +216,10 @@
                 "scale_by":"1",
                 "alert_window":"1800"
             },
-            "cost":0.0,
+            "profiles":[
+                "5860b7d04922933db03b46d1"
+            ],
             "strategy_enabled":false,
-            "provider":"574bd2500807a3777797713c",
-            "service_type":"ssh",
             "config":{
                 "setup":[
 
@@ -211,16 +227,16 @@
                 "uid":"574bd2500807a37777977151",
                 "classification":null,
                 "deploy":[
-                    "574c0a850807a3842010b997",
-                    "574bd2740807a37170572ca9"
+                    "5860b7d04922933db03b46ce",
+                    "5860b7d04922933db03b46cc"
                 ]
             },
-            "parent":"574bd2500807a3777797713e",
+            "parent":"5860b7d04922933db03b46cf",
             "array_data":{
                 "tasks":[
 
                 ],
-                "uid":"574bd2500807a3777797714d",
+                "uid":"5860b7d04922933db03b46dd",
                 "classification":"array",
                 "creation_time":1464586832,
                 "policy_rules":[
@@ -239,11 +255,12 @@
                     "scale_by":"1",
                     "alert_window":"1800"
                 },
-                "cost":0.0,
+                "profiles":[
+
+                ],
                 "strategy_enabled":false,
-                "version":14,
+                "version":31,
                 "scale_down_task":null,
-                "provider":null,
                 "config":{
                     "scale_up":[
 
@@ -254,13 +271,13 @@
                     "uid":"574bd2500807a3777797714c",
                     "classification":null
                 },
-                "parent":"574bd2500807a37777977141",
+                "parent":"5860b7d04922933db03b46d2",
                 "scale_up_task":null,
                 "flows":[
 
                 ],
-                "modification_time":1464602789,
-                "bp_id":"574bd2500807a37777977141",
+                "modification_time":1487058394,
+                "bp_id":"5860b7d04922933db03b46d2",
                 "properties":[
 
                 ],
@@ -278,6 +295,7 @@
                     "listen_for":"internal",
                     "uid":"574bd2500807a3777797714a"
                 },
+                "current_profile":null,
                 "resiliency_enabled":false,
                 "w":0.0,
                 "strategy_config":{
@@ -313,8 +331,7 @@
             "dependencies":[
 
             ],
-            "service_port":22,
-            "bp_id":"574bd2500807a37777977141",
+            "bp_id":"5860b7d04922933db03b46d2",
             "properties":[
 
             ],
@@ -331,6 +348,7 @@
                 "listen_for":"external",
                 "uid":"574c03c00807a3abfd403b8d"
             },
+            "current_profile":"5860b7d04922933db03b46d1",
             "resiliency_enabled":true,
             "w":0.0,
             "strategy_config":{
@@ -358,8 +376,7 @@
                 "initial_count":"1"
             },
             "y":300.0,
-            "x":335.0,
-            "os_type":"Linux"
+            "x":335.0
         }
     ],
     "w":0.0,
